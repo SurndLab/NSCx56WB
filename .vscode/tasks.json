@@ -1,0 +1,60 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "MySQL: Docker Up",
+			"type": "shell",
+			"command": "docker compose up -d --build",
+			"options": {
+				"cwd": "${workspaceFolder}/laravel"
+			},
+			"group": "build",
+			"problemMatcher": []
+		},
+		{
+			"label": "Laravel: Serve",
+			"type": "shell",
+			"command": "php artisan serve --host=0.0.0.0 --port=8080",
+			"options": {
+				"cwd": "${workspaceFolder}/laravel"
+			},
+			"isBackground": true,
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"problemMatcher": {
+				"pattern": {
+					"regexp": "^$"
+				},
+				"background": {
+					"activeOnStart": true,
+					"beginsPattern": "^Starting Laravel development server",
+					"endsPattern": "^Server running on"
+				}
+			}
+		},
+		{
+			"label": "Start All (MySQL + Laravel)",
+			"detail": "啟動 MySQL Docker 容器並啟動 Laravel 開發伺服器",
+			"dependsOn": [
+				"MySQL: Docker Up",
+				"Laravel: Serve"
+			],
+			"dependsOrder": "sequence",
+			"runOptions": {
+				"instanceLimit": 1
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Laravel: Migrate & Seed",
+			"type": "shell",
+			"command": "php artisan migrate --force && php artisan db:seed --force",
+			"options": {
+				"cwd": "${workspaceFolder}/laravel"
+			},
+			"problemMatcher": []
+		}
+	]
+}
