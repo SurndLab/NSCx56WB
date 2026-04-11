@@ -11,7 +11,10 @@ class AuthController extends Controller
 {
     public function showLoginForm()
     {
-        return response()->json(['message' => 'Render login form at /XX_module_d/login']);
+        if (Auth::check()) {
+            return redirect()->route('books.index');
+        }
+        return view('auth.login');
     }
 
     public function login(Request $request)
@@ -23,21 +26,21 @@ class AuthController extends Controller
 
         $user = User::with('publisher')->where('username', $data['username'])->first();
         if (!$user || !Hash::check($data['password'], $user->password)) {
-            return response()->json(['message' => 'Invalid credentials'], 401);
+            return back()->withErrors(['username' => '帳號或密碼錯誤'])->withInput();
         }
 
         if (!$user->is_active) {
-            return response()->json(['message' => 'Account disabled'], 401);
+            return back()->withErrors(['username' => '此帳號已停用'])->withInput();
         }
 
         if ($user->isPublisherAdmin() && (!$user->publisher || !$user->publisher->is_active)) {
-            return response()->json(['message' => 'Publisher disabled'], 401);
+            return back()->withErrors(['username' => '所屬出版社已停用，無法登入'])->withInput();
         }
 
         Auth::login($user);
         $request->session()->regenerate();
 
-        return response()->json(['message' => 'Login success']);
+        return redirect()->route('books.index');
     }
 
     public function logout(Request $request)
@@ -46,6 +49,6 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return response()->json(['message' => 'Logout success']);
+        return redirect()->route('login');
     }
 }

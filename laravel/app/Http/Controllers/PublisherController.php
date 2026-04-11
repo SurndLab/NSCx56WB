@@ -10,12 +10,25 @@ class PublisherController extends Controller
 {
     public function index()
     {
-        return Publisher::with('contacts')->where('is_active', true)->paginate(20);
+        $publishers = Publisher::with(['contacts', 'admins'])->where('is_active', true)->paginate(20);
+        return view('publishers.index', compact('publishers'));
     }
 
     public function inactive()
     {
-        return Publisher::with('contacts')->where('is_active', false)->paginate(20);
+        $publishers = Publisher::with('contacts')->where('is_active', false)->paginate(20);
+        return view('publishers.inactive', compact('publishers'));
+    }
+
+    public function show(Publisher $publisher)
+    {
+        $publisher->load(['contacts', 'admins']);
+        return view('publishers.show', compact('publisher'));
+    }
+
+    public function create()
+    {
+        return view('publishers.form');
     }
 
     public function store(Request $request)
@@ -45,7 +58,13 @@ class PublisherController extends Controller
             return $publisher;
         });
 
-        return response()->json($publisher->load('contacts'), 201);
+        return redirect()->route('publishers.show', $publisher->id)->with('success', '出版社已建立');
+    }
+
+    public function edit(Publisher $publisher)
+    {
+        $publisher->load('contacts');
+        return view('publishers.form', compact('publisher'));
     }
 
     public function update(Request $request, Publisher $publisher)
@@ -73,20 +92,20 @@ class PublisherController extends Controller
             $publisher->contacts()->createMany($data['contacts']);
         });
 
-        return response()->json($publisher->load('contacts'));
+        return redirect()->route('publishers.show', $publisher->id)->with('success', '出版社已更新');
     }
 
     public function disable(Publisher $publisher)
     {
         $publisher->update(['is_active' => false]);
 
-        return response()->json(['message' => 'Publisher disabled']);
+        return redirect()->route('publishers.index')->with('success', "出版社「{$publisher->publisher_name}」已停用");
     }
 
     public function enable(Publisher $publisher)
     {
         $publisher->update(['is_active' => true]);
 
-        return response()->json(['message' => 'Publisher enabled']);
+        return redirect()->route('publishers.inactive')->with('success', "出版社「{$publisher->publisher_name}」已重新啟用");
     }
 }
